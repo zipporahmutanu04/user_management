@@ -1,9 +1,8 @@
-
+# accounts/views.py
 from django.shortcuts import render, redirect
-from django.contrib.auth import login
-from django.contrib import messages
+from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib import messages
 from .forms import RegistrationForm, ProfileForm
 from .models import UserProfile
 
@@ -13,18 +12,22 @@ def register(request):
         if form.is_valid():
             user = form.save()
             UserProfile.objects.create(user=user)
-            # Mock email verification
             user.profile.is_verified = True
             user.profile.save()
             login(request, user)
             messages.success(request, 'Registration successful! Your account is verified.')
-            return redirect('verify_email')
+            return redirect('profile')
     else:
         form = RegistrationForm()
     return render(request, 'registration/register.html', {'form': form})
 
 def verify_email(request):
     return render(request, 'registration/verify_email.html')
+
+@login_required
+def profile(request):
+    return render(request, 'profile/profile.html', {'profile': request.user.profile})
+
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
